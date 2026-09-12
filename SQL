@@ -1,0 +1,27 @@
+-- Data Extraction and Aggregation Query for Power BI Integration
+
+WITH RegionalSales AS (
+    SELECT 
+        c.region,
+        p.category_name,
+        p.product_name,
+        o.order_id,
+        o.order_date,
+        (o.quantity * o.unit_price) AS total_amount,
+        ((o.quantity * o.unit_price) - (o.quantity * p.cost_price)) AS profit
+    FROM orders o
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN products p ON o.product_id = p.product_id
+    WHERE o.order_status = 'Completed'
+      AND o.order_date >= '2025-01-01'
+)
+SELECT 
+    region,
+    category_name,
+    COUNT(DISTINCT order_id) AS total_orders,
+    ROUND(SUM(total_amount), 2) AS total_revenue,
+    ROUND(SUM(profit), 2) AS total_profit,
+    ROUND((SUM(profit) / SUM(total_amount)) * 100, 2) AS profit_margin_percentage
+FROM RegionalSales
+GROUP BY region, category_name
+ORDER BY total_revenue DESC;
